@@ -37,7 +37,7 @@ module testbench
   // Bit to deal with initial X->0 transition detection
   bit clk_i;
   bit dram_clk_i, dram_reset_i;
-  
+
   `ifdef VERILATOR
     bsg_nonsynth_dpi_clock_gen
   `else
@@ -46,7 +46,7 @@ module testbench
    #(.cycle_time_p(`BP_SIM_CLK_PERIOD))
    clock_gen
     (.o(clk_i));
-  
+
   bsg_nonsynth_reset_gen
    #(.num_clocks_p(1)
      ,.reset_cycles_lo_p(0)
@@ -56,7 +56,7 @@ module testbench
     (.clk_i(clk_i)
      ,.async_reset_o(reset_i)
      );
-  
+
   `ifdef VERILATOR
     bsg_nonsynth_dpi_clock_gen
   `else
@@ -65,7 +65,7 @@ module testbench
    #(.cycle_time_p(`dram_pkg::tck_ps))
    dram_clock_gen
     (.o(dram_clk_i));
-  
+
   bsg_nonsynth_reset_gen
    #(.num_clocks_p(1)
      ,.reset_cycles_lo_p(0)
@@ -81,7 +81,7 @@ module testbench
   assign cfg_bus_li = cfg_bus_cast_li;
 
   logic mem_cmd_v_lo, mem_resp_v_lo;
-  logic mem_cmd_yumi_li, mem_cmd_ready_and_lo, mem_resp_yumi_li;
+  logic mem_cmd_ready_and_lo, mem_resp_yumi_li;
   bp_bedrock_cce_mem_msg_s mem_cmd_lo, mem_resp_lo;
 
   logic [trace_replay_data_width_lp-1:0] trace_data_lo;
@@ -92,14 +92,14 @@ module testbench
   logic trace_v_li, trace_ready_lo;
 
   logic [instr_width_gp-1:0] icache_data_lo;
-  logic icache_data_v_lo;
+  logic icache_data_v_lo, icache_ready_li;
 
   logic [trace_rom_addr_width_lp-1:0] trace_rom_addr_lo;
   logic [trace_replay_data_width_lp+3:0] trace_rom_data_li;
 
   logic [vaddr_width_p-1:0] vaddr_li;
   logic [ptag_width_p-1:0] ptag_li;
-  logic uncached_li;
+  logic uncached_li, nonidem_li, trace_yumi_li;
 
   logic switch_cce_mode;
   always_comb begin
@@ -230,9 +230,8 @@ module testbench
 
      ,.mem_cmd_o(mem_cmd_lo)
      ,.mem_cmd_v_o(mem_cmd_v_lo)
-     ,.mem_cmd_yumi_i(mem_cmd_yumi_li)
+     ,.mem_cmd_ready_i(mem_cmd_ready_and_lo)
     );
-  assign mem_cmd_yumi_li = mem_cmd_ready_and_lo & mem_cmd_v_lo;
 
   // Memory
   bp_nonsynth_mem
@@ -387,10 +386,10 @@ module testbench
 
   if(cce_block_width_p != icache_block_width_p)
     $error("Memory fetch block width does not match icache block width");
-  
+
   `ifndef VERILATOR
     initial
-      begin      
+      begin
         $assertoff();
         @(posedge clk_i);
         @(negedge reset_i);
