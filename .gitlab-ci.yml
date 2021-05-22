@@ -1,5 +1,5 @@
 variables:
-  GIT_STRATEGY: clone
+  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: none
 
 ## CI Stages:
@@ -28,8 +28,7 @@ stages:
     - sw_dev
     - be_dev_dcachetemptemptmep
   before_script:
-    - echo "Making libs"
-    - make libs
+      - git submodule update --init --checkout --recursive external/
   artifacts:
     when: always
     paths:
